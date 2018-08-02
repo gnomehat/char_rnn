@@ -12,10 +12,10 @@ from generate import *
 
 # Parse command line arguments
 argparser = argparse.ArgumentParser()
-argparser.add_argument('filename', type=str)
+argparser.add_argument('--filename', type=str, default='shakespeare.txt')
 argparser.add_argument('--n_epochs', type=int, default=2000)
 argparser.add_argument('--print_every', type=int, default=100)
-argparser.add_argument('--hidden_size', type=int, default=50)
+argparser.add_argument('--hidden_size', type=int, default=256)
 argparser.add_argument('--n_layers', type=int, default=2)
 argparser.add_argument('--mode', type=str, default='lstm')
 argparser.add_argument('--learning_rate', type=float, default=0.01)
@@ -32,14 +32,12 @@ def random_training_set(chunk_len):
     target = char_tensor(chunk[1:])
     return inp.cuda(), target.cuda()
 
+
 decoder = RNN(n_characters, args.hidden_size, n_characters, args.n_layers)
 decoder.cuda()
 decoder_optimizer = torch.optim.Adam(decoder.parameters(), lr=args.learning_rate)
 criterion = nn.CrossEntropyLoss()
 
-start = time.time()
-all_losses = []
-loss_avg = 0
 
 def train(inp, target):
     hidden = decoder.init_hidden()
@@ -55,25 +53,33 @@ def train(inp, target):
 
     return loss.data.item() / args.chunk_len
 
+
 def save():
     save_filename = os.path.splitext(os.path.basename(args.filename))[0] + '.pt'
     torch.save(decoder, save_filename)
     print('Saved as %s' % save_filename)
 
-try:
-    print("Training for %d epochs..." % args.n_epochs)
-    for epoch in range(1, args.n_epochs + 1):
-        loss = train(*random_training_set(args.chunk_len))
-        loss_avg += loss
 
-        if epoch % args.print_every == 0:
-            print('[%s (%d %d%%) %.4f]' % (time_since(start), epoch, epoch / args.n_epochs * 100, loss))
-            print(generate(decoder, 'Wh', 1000), '\n')
+def main():
+    start = time.time()
+    loss_avg = 0
+    try:
+        print("Training for %d epochs..." % args.n_epochs)
+        for epoch in range(1, args.n_epochs + 1):
+            loss = train(*random_training_set(args.chunk_len))
+            loss_avg += loss
 
-    print("Saving...")
-    save()
+            if epoch % args.print_every == 0:
+                print('[%s (%d %d%%) %.4f]' % (time_since(start), epoch, epoch / args.n_epochs * 100, loss))
+                print(generate(decoder, 'Wh', 1000), '\n')
 
-except KeyboardInterrupt:
-    print("Saving before quit...")
-    save()
+        print("Saving...")
+        save()
 
+    except KeyboardInterrupt:
+        print("Saving before quit...")
+        save()
+
+
+if __name__ == '__main__':
+    main()
