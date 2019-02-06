@@ -1,5 +1,7 @@
 # Practical PyTorch: Generating Shakespeare with a Character-Level RNN
 
+*Gnomehat Compatible*
+
 ## Dataset
 
 Download [this Shakespeare dataset](https://raw.githubusercontent.com/karpathy/char-rnn/master/data/tinyshakespeare/input.txt) (from [Andrej Karpathy's char-rnn](https://github.com/karpathy/char-rnn)) and save as `shakespeare.txt`
